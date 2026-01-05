@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relatório — CNPJ {{ cnpj }}</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --card: #121a2a;
+    --muted: #8aa0c2;
+    --accent: #5b9cff;
+    --text: #e7eefc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, "Helvetica Neue", sans-serif;
+    background: var(--bg); color: var(--text);
+    display: grid; grid-template-columns: 280px 1fr; min-height: 100vh;
+  }
+  aside {
+    background: #0f172a; padding: 20px; border-right: 1px solid rgba(255,255,255,0.08);
+    position: sticky; top: 0; height: 100vh; overflow: auto;
+  }
+  aside h2 { font-size: 16px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+  nav a {
+    display: block; color: var(--text); text-decoration: none; padding: 10px 12px; border-radius: 10px;
+    margin: 6px 0; background: transparent; transition: background .2s ease;
+  }
+  nav a:hover { background: rgba(91,156,255,0.1); }
+  main { padding: 28px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px;
+  }
+  .badge { font-size: 12px; color: var(--muted); background: #0f172a; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08) }
+  .card {
+    background: var(--card); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px;
+    margin-bottom: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  }
+  .card h3 { margin: 0 0 10px; font-size: 20px; }
+  pre, code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .muted { color: var(--muted); }
+  .footer { margin-top: 40px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <aside>
+    <h2>Sumário</h2>
+    <nav>
+      <a href="#overview">Identificação</a>
+      {% if conteudo %}<a href="#conteudo">Relatório Consolidado</a>{% endif %}
+      {% for bloco in blocos %}
+        <a href="#bloco-{{ loop.index }}">{{ bloco.titulo }}</a>
+      {% endfor %}
+      <a href="#parecer">Parecer Final</a>
+    </nav>
+  </aside>
+  <main>
+    <header>
+      <div>
+        <h1 style="margin:0;">Relatório — CNPJ {{ cnpj }}</h1>
+        <div class="muted">Gerado em {{ data_proc }}</div>
+      </div>
+      <div class="badge">Versão de avaliação</div>
+    </header>
+
+    <section id="overview" class="card">
+      <h3>Visão Geral</h3>
+      <pre>CNPJ: {{ cnpj }}
+Data: {{ data_proc }}
+Arquivos processados: {{ arquivos_processados|join(', ') }}</pre>
+    </section>
+
+    {% if conteudo %}
+    <section id="conteudo" class="card">
+      <h3>Relatório Consolidado</h3>
+      <div class="markdown-body">{{ conteudo | safe }}</div>
+    </section>
+    {% endif %}
+
+    {% for bloco in blocos %}
+    <section id="bloco-{{ loop.index }}" class="card">
+      <h3>{{ bloco.titulo }}</h3>
+      <pre>{{ bloco.texto }}</pre>
+    </section>
+    {% endfor %}
+
+    {# Exibir apenas se houver conteúdo real #}
+    {% if parecer_final is defined and parecer_final|trim %}
+      <section id="parecer-final">
+        <h2>Parecer Final</h2>
+        <div class="content">
+          {{ parecer_final | safe }}
+        </div>
+      </section>
+    {% endif %}
+
+    <div class="footer">SBK — Pipeline de Análise de Crédito</div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+  <body style="font-family: Arial, sans-serif; line-height:1.5; color:#222;">
+    <div style="text-align:center; margin-bottom:20px;">
+      <img src="cid:sbk_logo" alt="SBK" style="max-height:60px;">
+    </div>
+
+    <p>Olá,</p>
+
+    <p>
+      Segue em anexo os relatórios completos da análise de crédito referente ao
+      CNPJ <strong>{{ cnpj }}</strong> do dia <strong>{{ data_proc }}</strong>:
+    </p>
+
+    <ul>
+      <li>
+        <strong>{{ nome_resumo_pdf }}</strong> ⇒ Pontos relevantes dos arquivos
+        (<em>{{ arquivos_processados|join(', ') }}</em>)
+      </li>
+      <li>
+        <strong>{{ nome_analise_pdf }}</strong> ⇒ Sumarização dos blocos,
+        análises individuais e parecer final
+      </li>
+    </ul>
+
+    {% if observacoes %}
+      <p><strong>Observações:</strong> {{ observacoes }}</p>
+    {% endif %}
+
+    <p style="margin-top:30px;">
+      Atenciosamente,<br>
+      <strong>SBK — Pipeline de Análise de Crédito</strong>
+    </p>
+  </body>
+</html>

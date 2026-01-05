@@ -1,0 +1,27 @@
+# Environment variables (Secrets)
+.env
+
+# Python Virtual Env & Cache
+venv/
+__pycache__/
+*.pyc
+
+# Application Data (Runtime/Input/Output)
+Dados/
+execuções/
+entrada/
+saida/
+logs/
+*.log
+
+# Legacy & Debug Files
+*_old.py
+*_debug.py
+Pipeline_v1.txt
+Melhorias*.txt
+Melhorias*.md
+
+# Deployment & IDE Artifacts
+Deploy PWhere/
+.vscode/
+.idea/
