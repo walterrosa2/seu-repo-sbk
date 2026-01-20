@@ -25,31 +25,17 @@ C. Antes de relatar que não tem a capacidade de responder à minha pergunta por
 PASSO A PASSO
 EXECUTE OS COMANDOS PASSO A PASSO, DE FORMA LENTA E ESTRUTURADA: 
 1°) As informações serão enviadas formato texto para analise, após o prompt (verificar "==== RETORNOS DO AGENTE IA1 ====###" e ==== DOCUMENTOS ORIGINAIS SEM RESUMO DA IA1====). Cada bloco refere-se a informações relevantes da empresa que será analisada. 
-2°) Efetue a leitura de todos os blocos disponíveis. Caso algum documento listado no <relatório></relatório> esteja faltando, registre no retorno um aviso de documento não recebido para cada item ausente e prossiga normalmente com a extração e análise do que estiver disponível. Nunca solicite documentos adicionais; apenas registre a ausência com a tag/variável <documentos_ausentes>="lista de documentos" e <cor_card>"vermelho"</cor_card>.
-3°) **Garanta que todas as informações extraídas estejam completas e corretas**:
-4°) Analise o documento contábil enviado mais recente, ou seja, ano e mês mais próximo a data atual e caso tenha mais que 3 meses da data atual, gere um alerta no <relatório>, registre na tag/variável <alerta_docs_antigos> e <cor_card>="vermelho"</cor_card>.
-5°) **Inclua no relatório final, todas as seções e detalhes, gere a versão completa e total, não se restrinja ao conteúdo solicitado no relatório <relatório></relatório>, atue como expert, analise e caso identifique informações relevantes nos blocos incremente o relatório final**
-6.1) **IMPORTANTE - ESTRUTURA DOS BLOCOS**: Os blocos principais DEVEM ser divididos por ARQUIVO/DOCUMENTO analisado, e não por tema.
+4°) Efetue a leitura de todos os blocos disponíveis. Caso algum documento listado no <relatório></relatório> esteja faltando, registre no retorno um aviso de documento não recebido para cada item ausente e prossiga normalmente com a extração e análise do que estiver disponível. Nunca solicite documentos adicionais; apenas registre a ausência com a tag/variável <documentos_ausentes>="lista de documentos" e <cor_card>="vermelho".
+5°) **Garanta que todas as informações extraídas estejam completas e corretas**:
+6°) Analise o documento contábil enviado mais recente, ou seja, ano e mês mais próximo a data atual e caso tenha mais que 3 meses da data atual, gere um alerta no <relatório>, registre na tag/variável <alerta_docs_antigos> e <cor_card>="vermelho".
+7°) **Inclua no relatório final, todas as seções e detalhes, gere a versão completa e total, não se restrinja ao conteúdo solicitado no relatório <relatório></relatório>, atue como expert, analise e caso identifique informações relevantes nos blocos incremente o relatório final**
+7.1) **IMPORTANTE - ESTRUTURA DOS BLOCOS**: Os blocos principais DEVEM ser divididos por ARQUIVO/DOCUMENTO analisado, e não por tema.
     - O nome do bloco deve seguir a regra: <bloco>="Numeral_NomeArquivo" (ex: "1_IRPF - Fulano", "2_SERASA - Empresa X").
     - Dentro de cada bloco de arquivo, crie SUBITENS para as análises específicas (ex: "1.1 Informações Pessoais", "1.2 Renda").
-6.2) <regra_cor> Defina a cor do card conforme a criticidade: "vermelho" (crítico), "amarelo" (atenção/neutro), "verde" (positivo) ou "cinza" (informativo/indefinido). Exemplo: <cor_card>="verde".
+7.2) <regra_cor> Defina a cor do card conforme a criticidade: "vermelho" (crítico), "amarelo" (atenção/neutro), "verde" (positivo) ou "cinza" (informativo/indefinido). Exemplo: <cor_card>="verde".
     - A cor deve refletir a análise global daquele documento.
-    - O conteúdo dos blocos precisam estar delimitados, ou seja, temos de abrir a variável, inserir conteúdo e depois fechar conforme exemplo:
-[<cor_card>"verde"</cor_card>
-<bloco>"4_SERASA - Delcio Vieira Tannus Neto"
-**4_1_SERASA - Cadastro**
-- CPF: 701.428.946-21
-- Situação: Regular
-- Participação societária: 100% Agro Tannus LTDA EPP
-
-**4_2_SERASA - Consultas e Risco**
-- Consultas recentes: 1 (jun/2025)
-- Sem pendências, protestos ou ações judiciais.
-
-**4_3_SERASA - Análise Geral**
-- Histórico financeiro positivo, sem restrições.</bloco>]
-6.3) <regra_cor> Não use cores diferentes das listadas.
-6.4) Para os arquivos gerados siga RIGOROSAMENTE a formatção <formatação_relatorio>.
+7.3) <regra_cor> Não use cores diferentes das listadas.
+7.4) Para os arquivos gerados siga RIGOROSAMENTE a formatção <formatação_relatorio>.
 8°) Antes de finalizar o relatório final insira mais uma sessão com base no método quantitativo RAROC, PD e LGD para sugerir um valor a ser liberado e evidencie gerando o relatório risco conforme modelo <relatorio_risco>.
 
 CRITÉRIOS
@@ -63,14 +49,13 @@ Siga rigorosamente o relatório modelo abaixo.
 Nota: Os nomes dos blocos abaixo são EXEMPLOS de conteúdo. Você deve agrupar o conteúdo pelo NOME DO ARQUIVO DE ORIGEM, conforme regra 7.1.
 
 <estrutura_bloco>
-<bloco>"NOME_DO_ARQUIVO_LIDO"
+<bloco>="NOME_DO_ARQUIVO_LIDO"
 <cor_card>="cor"
 Subitem => 1_NOME_DO_ARQUIVO - Tópico 1 (Ex: Informações Cadastrais)
     Análise detalhada...
     Dados extraídos...
 Subitem => 1_NOME_DO_ARQUIVO - Tópico 2 (Ex: Análise Financeira)
     Análise detalhada...
-</bloco>
 </estrutura_bloco>
 
 OBS: Para cada arquivo analisado (IRPF, Serasa, Balanço, etc.), gere um bloco único contendo seus subitens.
@@ -111,8 +96,8 @@ OBS: Para cada arquivo analisado (IRPF, Serasa, Balanço, etc.), gere um bloco �
     - Análise completa de liquidez e solvência.
 
 <relatorio_risco>
-<bloco>"RELATORIO RISCO"</bloco>
-<cor_card>"cinza"</cor_card>
+<bloco>="RELATORIO RISCO"
+<cor_card>="cinza"
 Detalhar o cálculo das metodologias RAROC, PD e LGD,  contendo:
 
 1. Cálculo quantitativo RAROC, PD e LGD.
@@ -134,9 +119,8 @@ Detalhar o cálculo das metodologias RAROC, PD e LGD,  contendo:
 </relatório>
 
 <formatação_relatorio>
-<bloco>"Numeral_NOME DO BLOCO" => Use numeral sequencial INCREMENTAL único (1, 2, 3...) para cada novo arquivo lido + nome do arquivo. IGNORE qualquer numeração existente no nome do arquivo original. (Exemplo: 1_IRPF - Leticia, 2_SERASA - Empresa XPTO, 3_VADU, 4_SPC).
-<cor_card>"preencher conforme <regra_cor>"
+<bloco>="Numeral_NOME DO BLOCO" => Use numeral sequencial INCREMENTAL único (1, 2, 3...) para cada novo arquivo lido + nome do arquivo. IGNORE qualquer numeração existente no nome do arquivo original. (Exemplo: 1_IRPF - Leticia, 2_SERASA - Empresa XPTO, 3_VADU, 4_SPC).
+<cor_card>="preencher conforme <regra_cor>"
 Subitem => Numeral sequencial (bloco_subitem) +nome do arquivo lido que gerou o subitem (Exemplo: 1_1_IRPF - Informações..., 1_2_IRPF - Renda..., 2_1_SERASA - Dados..., etc)
 Negrito => Use negrito para destacar os blocos e subitens somente.
-As variáveis <bloco> e <cor_card> precisam vir com o delimitador de finalização </bloco> ou </cor_card> pois assim a aplicação vai reconhecer a finalização do bloco
 </formatação_relatorio>

@@ -10,9 +10,9 @@ from jinja2 import Environment, FileSystemLoader
 from datetime import datetime
 
 # Integra com Settings (.env)
-from config import get_settings  # usa SMTP_HOST/PORT/USER/PASS/TLS do .env
+from config import get_settings
 from utils.naming import nome_resumo_ia, nome_analise_final, date_ddmmyyyy
-
+from report_parser import clean_filename
 
 # ---------------------------
 # Helpers
@@ -24,28 +24,29 @@ def _env(templates_dir: str = "templates"):
 def build_email_html(
     cnpj: str,
     data_proc: datetime,
-    nome_resumo_pdf: str,
-    nome_analise_pdf: str,
+    nome_resumo_html: str,
+    nome_analise_html: str,
     arquivos_processados: list[str],
     observacoes: str = "",
 ) -> tuple[str, str]:
     """
     Renderiza corpo do email em HTML com logo inline (cid).
-    Retorna (html, logo_cid).
     """
     env = _env()
     tpl = env.get_template("email_body.html.j2")
 
-    logo_cid = make_msgid(domain="sbk.local")[1:-1]  # remove <>
+    # [FIX] Clean filenames for display in email
+    clean_files = [clean_filename(f) for f in arquivos_processados]
+
+    logo_cid = make_msgid(domain="sbk.local")[1:-1]
     html = tpl.render(
         cnpj=cnpj,
         data_proc=date_ddmmyyyy(data_proc),
-        nome_resumo_pdf=nome_resumo_pdf,
-        nome_analise_pdf=nome_analise_pdf,
-        arquivos_processados=arquivos_processados,
+        nome_resumo_html=nome_resumo_html,
+        nome_analise_html=nome_analise_html,
+        arquivos_processados=clean_files,
         observacoes=observacoes,
     )
-    # Injeta a tag <img src="cid:...">
     html = html.replace("cid:sbk_logo", f"cid:{logo_cid}")
     return html, logo_cid
 
@@ -58,11 +59,6 @@ def _attach_file(msg: EmailMessage, path: Path, as_name: str):
 
 
 def _smtp_send(msg: EmailMessage) -> dict:
-    """
-    Envia a mensagem usando as configs do .env (SMTP_HOST/PORT/USER/PASS/TLS).
-    - SMTP_TLS=True  -> conecta em host/port e faz STARTTLS (típico porta 587)
-    - SMTP_TLS=False -> usa SMTP_SSL (típico porta 465)
-    """
     s = get_settings()
     host = s.SMTP_HOST
     port = s.SMTP_PORT
@@ -75,59 +71,52 @@ def _smtp_send(msg: EmailMessage) -> dict:
 
     try:
         if use_tls:
-            # STARTTLS (porta 587 na maioria dos provedores)
             smtp = smtplib.SMTP(host, port, timeout=20)
             smtp.ehlo()
             smtp.starttls()
             smtp.ehlo()
         else:
-            # SSL direto (porta 465 na maioria dos provedores)
             smtp = smtplib.SMTP_SSL(host, port, timeout=20)
 
         smtp.login(user, pwd)
         smtp.send_message(msg)
         smtp.quit()
         return {"ok": True, "detail": "Email enviado com sucesso"}
-    except smtplib.SMTPAuthenticationError as e:
-        # Caso clássico do Gmail (precisa App Password)
-        dica = (
-            "Falha de autenticação SMTP.\n"
-            "- Se for Gmail com 2FA: gere um App Password em https://myaccount.google.com/apppasswords\n"
-            "- Confirme SMTP_HOST/PORT/TLS conforme seu provedor.\n"
-            "- O campo 'From' deve ser a mesma conta autenticada."
-        )
-        return {"ok": False, "detail": f"SMTPAuthenticationError: {e}\n{dica}"}
     except Exception as e:
         return {"ok": False, "detail": f"{type(e).__name__}: {e}"}
 
 
-# ---------------------------
-# Função principal de envio
-# ---------------------------
 def enviar_relatorio_final(cnpj: str, destinatario: str, exec_root: Path) -> dict:
     """
-    Monta e envia o e-mail com anexos:
-    - ResumoIA_...pdf / html
-    - AnaliseIA_...pdf / html
-    Ignora arquivos técnicos (.DONE, .txt de IA1, prompts etc).
+    Monta e envia o e-mail com anexos.
     """
     data_proc = datetime.now()
     retorno_dir = exec_root / "Retorno_IA"
 
-    # Sempre localizar os finais (Resumo e Analise)
-    resumo_pdf = next(retorno_dir.glob("ResumoIA_*.pdf"), None)
-    analise_pdf = next(retorno_dir.glob("AnaliseIA_*.pdf"), None)
+    # Buscar arquivos finais (flexível)
+    pd_files = list(retorno_dir.glob("*.pdf"))
+    html_files = list(retorno_dir.glob("*.html"))
+    
+    # Tenta identificar os específicos
+    resumo_html = next((p for p in html_files if "ResumoIA_" in p.name), None)
+    analise_html = next((p for p in html_files if "AnaliseIA_" in p.name), None)
 
-    if not resumo_pdf or not analise_pdf:
-        return {"ok": False, "detail": "Arquivos PDF finais não encontrados."}
+    # Se não achou nenhum relatório principal, erro
+    if not resumo_html and not analise_html:
+         return {"ok": False, "detail": f"Nenhum relatório HTML encontrado em {retorno_dir}"}
 
     # Renderizar corpo HTML
-    arquivos_processados = [p.stem for p in (exec_root / "saida").glob("**/*.txt")]
+    arquivos_processados = [p.name for p in (exec_root / "saida").glob("**/*.txt")]
+    
+    # Nomes para o template (fallback se algum for None)
+    nome_resumo = clean_filename(resumo_html.name) if resumo_html else "-"
+    nome_analise = clean_filename(analise_html.name) if analise_html else "-"
+
     html, logo_cid = build_email_html(
         cnpj,
         data_proc,
-        resumo_pdf.name,
-        analise_pdf.name,
+        nome_resumo,
+        nome_analise,
         arquivos_processados
     )
 
@@ -139,13 +128,11 @@ def enviar_relatorio_final(cnpj: str, destinatario: str, exec_root: Path) -> dic
     msg.set_content("Seu cliente de e-mail não suporta HTML.")
     msg.add_alternative(html, subtype="html")
 
-    # Anexar logo inline
     logo_path = Path("templates") / "sbk.png"
     if logo_path.exists():
         with open(logo_path, "rb") as f:
-            msg.get_payload()[1].add_related(f.read(),
-                                             maintype="image", subtype="png",
-                                             cid=f"<{logo_cid}>")
+            msg.get_payload()[1].add_related(f.read(), maintype="image", subtype="png", cid=f"<{logo_cid}>")
+
 
     # ---------------------------
     # Lista de EXCLUSÃO (NÃO ENVIAR)
@@ -167,16 +154,9 @@ def enviar_relatorio_final(cnpj: str, destinatario: str, exec_root: Path) -> dic
     # ---------------------------
     # ANEXOS
     # ---------------------------
-    # Anexar os finais obrigatórios
-    _attach_file(msg, resumo_pdf, resumo_pdf.name)
-    _attach_file(msg, analise_pdf, analise_pdf.name)
-
-    resumo_html = next(retorno_dir.glob("ResumoIA_*.html"), None)
-    analise_html = next(retorno_dir.glob("AnaliseIA_*.html"), None)
-    if resumo_html:
-        _attach_file(msg, resumo_html, resumo_html.name)
-    if analise_html:
-        _attach_file(msg, analise_html, analise_html.name)
+    # Anexar HTMLs encontrados
+    if resumo_html: _attach_file(msg, resumo_html, resumo_html.name)
+    if analise_html: _attach_file(msg, analise_html, analise_html.name)
 
     # Qualquer outro arquivo será ignorado por padrão
     for p in retorno_dir.rglob("*"):
@@ -184,7 +164,7 @@ def enviar_relatorio_final(cnpj: str, destinatario: str, exec_root: Path) -> dic
             continue
         if not deve_enviar(p):
             continue
-        if p in [resumo_pdf, analise_pdf, resumo_html, analise_html]:
+        if p in [resumo_html, analise_html]:
             continue
         # Se quiser anexar mais tipos no futuro, pode liberar aqui
 

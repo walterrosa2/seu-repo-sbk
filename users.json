@@ -1,0 +1,10 @@
+{
+    "admin": {
+        "password": "$2b$12$bJisKdNN8be5NwfV2XWBS.N6qQBpAEk.5wbv4IHjuimV4t08PZFDO",
+        "is_admin": true
+    },
+    "testuser": {
+        "password": "$2b$12$2czaAg.EARurSVbT4OIXVuMVXV.dWzZZ50wyimMrAqIgURGGcEDZm",
+        "is_admin": false
+    }
+}

@@ -8,6 +8,8 @@ from typing import List
 from datetime import datetime
 
 from openai import OpenAI
+from report_parser import clean_filename
+from utils.naming import nome_resumo_ia
 
 # =============================
 # Configs do ambiente / OpenAI
@@ -121,7 +123,8 @@ def process_manifest_ia1(cnpj: str, exec_root: Path = Path("execuções")) -> di
     for p in ia1_txts:
         try:
             if p.exists() and p.stat().st_size > 0:
-                titulo = f"### {p.name}"
+                # Use clean filename for the header
+                titulo = f"### {clean_filename(p.name)}"
                 conteudo = read_text(p)
                 blocos.append(f"{titulo}\n\n{conteudo}")
         except Exception as e:
@@ -137,7 +140,9 @@ def process_manifest_ia1(cnpj: str, exec_root: Path = Path("execuções")) -> di
         try:
             from report_service import gerar_relatorio_final
             conteudo_html = md_consolidado_path.read_text(encoding="utf-8", errors="ignore")
-            gerar_relatorio_final(cnpj, datetime.now(), conteudo_html, ret_dir.parent)
+            # [FIX] Aponta para a pasta correta (saida_dir) e define NOME Explicito (ResumoIA)
+            resumo_name = nome_resumo_ia("DocumentosUnificados", datetime.now())
+            gerar_relatorio_final(cnpj, datetime.now(), conteudo_html, saida_dir, output_filename=resumo_name)
 
         except Exception as e:
             print(f"⚠️ Erro ao gerar PDF IA1 formatado: {e}")
