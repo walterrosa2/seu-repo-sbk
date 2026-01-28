@@ -650,6 +650,7 @@ with tab_res:
                 if st.button("Ver Detalhe", key="btn_risco", use_container_width=True):
                     st.session_state["viz_section"] = "Resumo Executivo"
                     st.session_state["resumo_focus"] = "justificativa_risco"
+                    st.session_state["scroll_target_id"] = "anchor_risco"
                     st.session_state["do_scroll"] = True
                     st.rerun()
 
@@ -659,6 +660,7 @@ with tab_res:
                 if st.button("Ver Detalhe", key="btn_limite", use_container_width=True):
                     st.session_state["viz_section"] = "Resumo Executivo"
                     st.session_state["resumo_focus"] = "justificativa_limite"
+                    st.session_state["scroll_target_id"] = "anchor_limite"
                     st.session_state["do_scroll"] = True
                     st.rerun()
 
@@ -668,6 +670,7 @@ with tab_res:
                 if st.button("Ver Métricas", key="btn_raroc", use_container_width=True):
                     st.session_state["viz_section"] = "Resumo Executivo"
                     st.session_state["resumo_focus"] = "calculo_raroc"
+                    st.session_state["scroll_target_id"] = "anchor_raroc"
                     st.session_state["do_scroll"] = True
                     st.rerun()
 
@@ -753,6 +756,9 @@ with tab_res:
                             if st.button(f"Ver Detalhes", key=f"btn_{doc['raw_name']}_{idx}", use_container_width=True):
                                 st.session_state["selected_doc"] = doc["raw_name"]
                                 st.session_state["viz_section"] = "Detalhamento IA (Full)"
+                                # Define target ID for block
+                                blk_id_clean = re.sub(r"[^a-zA-Z0-9]", "_", doc['clean_name']).lower()
+                                st.session_state["scroll_target_id"] = f"blk_{blk_id_clean}"
                                 st.session_state["do_scroll"] = True
                                 st.rerun()
 
@@ -853,6 +859,7 @@ with tab_res:
                     
                     # SECTION: RISCO
                     if (not foco or foco == "justificativa_risco") and resumo.get("justificativa_risco"):
+                        st.markdown("<div id='anchor_risco'></div>", unsafe_allow_html=True)
                         st.markdown(f"#### Risco: {resumo.get('risco', 'N/D')}")
                         st.write(sanitize_report_text(resumo["justificativa_risco"]))
                         has_details = True
@@ -860,6 +867,7 @@ with tab_res:
 
                     # SECTION: LIMITE
                     if (not foco or foco == "justificativa_limite") and resumo.get("justificativa_limite"):
+                        st.markdown("<div id='anchor_limite'></div>", unsafe_allow_html=True)
                         st.markdown(f"#### Limite Sugerido: {resumo.get('limite', 'N/D')}")
                         st.write(sanitize_report_text(resumo["justificativa_limite"]))
                         has_details = True
@@ -867,6 +875,7 @@ with tab_res:
 
                     # SECTION: RAROC
                     if (not foco or foco == "calculo_raroc") and resumo.get("calculo_raroc"):
+                        st.markdown("<div id='anchor_raroc'></div>", unsafe_allow_html=True)
                         st.markdown(f"#### Memória de Cálculo RAROC")
                         st.info(sanitize_report_text(resumo["calculo_raroc"]))
                         has_details = True
@@ -880,6 +889,7 @@ with tab_res:
                     # Então se tiver foco, não mostra decisão final a não ser que o foco SEJA decisão.
                     
                     if (not foco or foco == "decisao") and resumo.get("decisao"):
+                        st.markdown("<div id='anchor_decisao'></div>", unsafe_allow_html=True)
                         st.markdown("#### Conclusão Final")
                         st.success(resumo["decisao"])
                         has_details = True

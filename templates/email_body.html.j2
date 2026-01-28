@@ -1,6 +1,6 @@
 <!doctype html>
 <html>
-  <body style="font-family: Arial, sans-serif; line-height:1.5; color:#222;">
+  <body style="font-family: Arial, sans-serif; line-height:1.6; color:#222;">
     <div style="text-align:center; margin-bottom:20px;">
       <img src="cid:sbk_logo" alt="SBK" style="max-height:60px;">
     </div>
@@ -8,20 +8,23 @@
     <p>Olá,</p>
 
     <p>
-      Segue em anexo os relatórios completos da análise de crédito referente ao
+      Segue em anexo o relatório completo da análise de crédito referente ao
       CNPJ <strong>{{ cnpj }}</strong> do dia <strong>{{ data_proc }}</strong>:
     </p>
 
+    <p><strong>Conteúdo do Relatório:</strong></p>
     <ul>
-      <li>
-        <strong>{{ nome_resumo_html }}</strong> ⇒ Pontos relevantes dos arquivos
-        (<em>{{ arquivos_processados|join(', ') }}</em>)
-      </li>
-      <li>
-        <strong>{{ nome_analise_html }}</strong> ⇒ Sumarização dos blocos,
-        análises individuais e parecer final
-      </li>
+      {% for bloco in blocos_analisados %}
+        <li>{{ bloco }}</li>
+      {% else %}
+        <li>Análise geral dos documentos fornecidos.</li>
+      {% endfor %}
     </ul>
+
+    <p>
+      O arquivo em anexo (<strong>{{ nome_analise_html }}</strong>) contém os indicadores de risco (RAROC, PD, LGD), 
+      limites sugeridos e o detalhamento de cada bloco acima.
+    </p>
 
     {% if observacoes %}
       <p><strong>Observações:</strong> {{ observacoes }}</p>

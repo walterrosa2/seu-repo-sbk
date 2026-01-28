@@ -27,6 +27,7 @@ def build_email_html(
     nome_resumo_html: str,
     nome_analise_html: str,
     arquivos_processados: list[str],
+    blocos_analisados: list[str] = None,
     observacoes: str = "",
 ) -> tuple[str, str]:
     """
@@ -45,6 +46,7 @@ def build_email_html(
         nome_resumo_html=nome_resumo_html,
         nome_analise_html=nome_analise_html,
         arquivos_processados=clean_files,
+        blocos_analisados=blocos_analisados or [],
         observacoes=observacoes,
     )
     html = html.replace("cid:sbk_logo", f"cid:{logo_cid}")
@@ -112,12 +114,25 @@ def enviar_relatorio_final(cnpj: str, destinatario: str, exec_root: Path) -> dic
     nome_resumo = clean_filename(resumo_html.name) if resumo_html else "-"
     nome_analise = clean_filename(analise_html.name) if analise_html else "-"
 
+    # Extração de blocos do relatório unificado para o corpo do email
+    unificado_md = retorno_dir / "relatorio_unificado.md"
+    blocos_nomes = []
+    if unificado_md.exists():
+        from report_parser import parse_unified_report
+        try:
+            txt_unificado = unificado_md.read_text(encoding="utf-8", errors="ignore")
+            blocos_objs = parse_unified_report(txt_unificado)
+            blocos_nomes = [b['clean_name'] for b in blocos_objs]
+        except Exception:
+            pass
+
     html, logo_cid = build_email_html(
         cnpj,
         data_proc,
         nome_resumo,
         nome_analise,
-        arquivos_processados
+        arquivos_processados,
+        blocos_analisados=blocos_nomes
     )
 
     msg = EmailMessage()
@@ -154,9 +169,13 @@ def enviar_relatorio_final(cnpj: str, destinatario: str, exec_root: Path) -> dic
     # ---------------------------
     # ANEXOS
     # ---------------------------
-    # Anexar HTMLs encontrados
-    if resumo_html: _attach_file(msg, resumo_html, resumo_html.name)
-    if analise_html: _attach_file(msg, analise_html, analise_html.name)
+    # ANEXO ÚNICO: Enviar apenas o arquivo de Análise IA (Principal)
+    # Ignorar o ResumoIA conforme pedido pelo usuário
+    if analise_html: 
+        _attach_file(msg, analise_html, analise_html.name)
+    elif resumo_html:
+        # Fallback se a análise final não existir por algum motivo
+        _attach_file(msg, resumo_html, resumo_html.name)
 
     # Qualquer outro arquivo será ignorado por padrão
     for p in retorno_dir.rglob("*"):

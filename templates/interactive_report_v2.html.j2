@@ -25,6 +25,7 @@
     color: var(--text-main);
     display: flex;
     min-height: 100vh;
+    line-height: 1.6; /* Improved global line height */
   }
 
   /* SIDEBAR */
@@ -147,9 +148,18 @@
   .st-info strong { color: #000; }
   
   /* Markdown content fixups */
-  .st-info p { margin-top: 0; margin-bottom: 0.5em; }
+  .st-info p { 
+    margin-top: 0; 
+    margin-bottom: 1.2rem; /* More space between paragraphs */
+  }
   .st-info p:last-child { margin-bottom: 0; }
-  .st-info ul { padding-left: 1.5rem; margin: 0.5em 0; }
+  .st-info ul, .st-info ol { 
+    padding-left: 1.5rem; 
+    margin: 1rem 0; 
+  }
+  .st-info li {
+    margin-bottom: 0.6rem; /* More space between list items */
+  }
   
   hr { border: 0; border-top: 1px solid #eee; margin: 2rem 0; }
   

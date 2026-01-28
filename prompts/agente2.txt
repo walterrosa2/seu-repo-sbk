@@ -111,7 +111,7 @@ OBS: Para cada arquivo analisado (IRPF, Serasa, Balanço, etc.), gere um bloco �
     - Análise completa de liquidez e solvência.
 
 <relatorio_risco>
-<bloco>"RELATORIO RISCO"</bloco>
+<bloco>"RELATORIO RISCO"
 <cor_card>"cinza"</cor_card>
 Detalhar o cálculo das metodologias RAROC, PD e LGD,  contendo:
 
@@ -129,6 +129,7 @@ Detalhar o cálculo das metodologias RAROC, PD e LGD,  contendo:
    - Variável <justificativa_limite>.
 
 4. Conclusão / Justificativa Técnica <conclusao>.
+</bloco>
 </relatorio_risco>
 
 </relatório>
