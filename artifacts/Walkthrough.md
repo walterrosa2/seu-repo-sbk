@@ -1,23 +1,20 @@
-# Walkthrough: Correção da Substituição de Imagem no Editor de Slides
+# Walkthrough: Editor de Apresentações & Mapeamento Dinâmico (Branch analise-apresentacao)
 
 ## O que foi feito
-1. Inserido um botão de confirmação `🖼️ Confirmar e Substituir Imagem` logo abaixo do uploader de arquivos na aba **Editor de Slides**.
-2. Implementada a lógica de "early return" e "auto-save" para este botão:
-   - Salva a imagem no diretório de saída correspondente.
-   - Atualiza a referência da imagem no objeto `slide`.
-   - Persiste as mudanças no arquivo `slides_config.json`.
-   - Regera automaticamente os arquivos PowerPoint (`.pptx`) e PDF (`.pdf`) da apresentação.
-   - Realiza o `st.rerun()` para refletir as mudanças na interface.
+1. **Branch analise-apresentacao**: Criada nova branch de staging no GitHub para isolar o desenvolvimento de análise e apresentação.
+2. **Mapeamento Dinâmico**: Implementado sistema de CRUD para tipos de documentos em `config_evidencias.json`, permitindo adicionar novos tipos e definir regras de recorte de slides globalmente.
+3. **Editor de Slides Premium**: Refatoração do seletor de slides (substituindo abas por um `selectbox` centralizado) para maior escalabilidade e performance.
+4. **Substituição Direta de Imagem**: Adicionado botão de confirmação imediata para upload de imagens substitutas nos slides, regerando o PPTX/PDF instantaneamente.
+5. **Estabilização de QA**: Correção de dependências (`fpdf2`, `python-pptx`) e ajustes de robustez no `interface_frontend.py` para lidar com desempacotamento de abas dinâmicas.
 
 ## Onde no código
-As mudanças foram concentradas no ficheiro `interface_frontend.py`, especificamente entre as linhas 1608 e 1635:
-- Adição da lógica de persistência para o `nova_img` logo após o `st.file_uploader`.
-- Manutenção da lógica original dentro do formulário principal para compatibilidade caso o utilizador prefira "Salvar Tudo" (texto e imagem) de uma vez.
+- `interface_frontend.py`: Lógica de abas dinâmicas, seletor de slides e botões de ação rápida.
+- `config_evidencias_service.py`: Serviço de persistência para as configurações globais de mapeamento.
+- `presentation_service.py` & `pdf_presentation_service.py`: Motores de geração de PPTX e PDF.
+- `_start.ps1`: Script de inicialização atualizado com validação de módulos críticos.
 
 ## Como Validar
-1. Inicie a aplicação: `.\_start.ps1`
-2. Navegue até a aba **🎞️ Apresentação**.
-3. Selecione um slide no **Editor de Slides**.
-4. Faça o upload de uma nova imagem na área de **Subir Imagem Substituta (Opcional)**.
-5. Verifique que agora aparece o botão **🖼️ Confirmar e Substituir Imagem**.
-6. Clique no botão e valide que a prévia da imagem é atualizada e o PPTX/PDF são regerados (receberá um toast de sucesso).
+1. **Ambiente**: Execute `.\_start.ps1` para validar as dependências.
+2. **Mapeamento**: Vá em **🎞️ Apresentação** > **Configurações de Mapeamento** e crie um novo tipo de documento.
+3. **Editor**: Localize um slide, altere o título/descrição e clique em "Salvar Ajustes e Regerar".
+4. **Imagem**: Suba uma imagem substituta e clique no botão azul correspondente; verifique se o PPTX foi atualizado no diretório de saída.

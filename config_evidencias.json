@@ -1,1 +1,225 @@
-{}
+{
+    "SERASA": {
+        "exibir_usuario": true,
+        "palavras_chave": [
+            "serasa",
+            "confin"
+        ],
+        "slides": [
+            {
+                "id": "serasa_identificacao",
+                "modo": "ancora",
+                "ancora": "SERASA",
+                "cabecalho": "SERASA - Identificação e Risco",
+                "descricao": "Identificação: {serasa.identificacao_e_cadastro_da_empresa}\n\nRisco: {serasa.endividamento_e_risco_de_credito}\n{serasa.pendencias_financeiras_e_restritivas}"
+            },
+            {
+                "id": "serasa_historico",
+                "modo": "ancora",
+                "ancora": "SERASA",
+                "cabecalho": "SERASA - Consultas e Consultas Relevantes",
+                "descricao": "{serasa.consultas_ao_serasa_spc}\n\nPagamentos: {serasa.historico_de_pagamentos_e_pontualidade}"
+            }
+        ]
+    },
+    "SPC": {
+        "exibir_usuario": true,
+        "palavras_chave": [
+            "spc",
+            "boa vista",
+            "boavista"
+        ],
+        "slides": [
+            {
+                "id": "spc_identificacao",
+                "modo": "ancora",
+                "ancora": "SPC",
+                "cabecalho": "SPC - Identificação e Risco",
+                "descricao": "{spc.identificacao_e_cadastro_da_empresa}\n\nRiscos e Pendências:\n{spc.endividamento_e_risco_de_credito}"
+            }
+        ]
+    },
+    "IRPF": {
+        "exibir_usuario": true,
+        "palavras_chave": [
+            "irpf",
+            "imposto de renda",
+            "declaracao",
+            "recibo de entrega"
+        ],
+        "slides": [
+            {
+                "id": "irpf_bens",
+                "modo": "ancora",
+                "ancora": "IRPF",
+                "cabecalho": "IRPF - Informações e Patrimônio",
+                "descricao": "{irpf.informacoes_pessoais_e_patrimoniais}\n\nParticipação: {irpf.participacao_em_empresas}"
+            },
+            {
+                "id": "irpf_dividas",
+                "modo": "ancora",
+                "ancora": "IRPF",
+                "cabecalho": "IRPF - Renda e Dívidas",
+                "descricao": "Renda/Capacidade: {irpf.renda_e_capacidade_de_pagamento}\n\nEndividamento: {irpf.endividamento_e_compromissos_financeiros}"
+            }
+        ]
+    },
+    "VADU": {
+        "exibir_usuario": true,
+        "palavras_chave": [
+            "vadu",
+            "relatorio completo"
+        ],
+        "slides": [
+            {
+                "id": "vadu_cadastral",
+                "modo": "ancora",
+                "ancora": "VADU",
+                "cabecalho": "VADU - Situação Cadastral e Fiscal",
+                "descricao": "{vadu.identificacao_e_cadastro_da_empresa}\n\nSituação Fiscal/Tributária: {vadu.situacao_fiscal_e_tributaria}"
+            },
+            {
+                "id": "vadu_processos",
+                "modo": "ancora",
+                "ancora": "VADU",
+                "cabecalho": "VADU - Processos e Risco",
+                "descricao": "{vadu.processos_judiciais}\n\nRisco e Conformidade: {vadu.analise_de_risco_e_conformidade}"
+            }
+        ]
+    },
+    "Cartão CNPJ": {
+        "exibir_usuario": true,
+        "palavras_chave": [
+            "cartao cnpj",
+            "comprovante cnpj",
+            "comprovante de inscricao",
+            "cnpj"
+        ],
+        "slides": [
+            {
+                "id": "cnpj_info",
+                "modo": "ancora",
+                "ancora": "CNPJ",
+                "cabecalho": "Cartão CNPJ - Extrato",
+                "descricao": "Dados Extraídos: {cartao_cnpj.extracao_razao_social_numero_atividade}\n\nValidação: {cartao_cnpj.validacao_situacao_cadastral}"
+            }
+        ]
+    },
+    "Faturamento": {
+        "exibir_usuario": true,
+        "palavras_chave": [
+            "faturamento",
+            "extrato",
+            "defis",
+            "pgdas",
+            "receita bruta"
+        ],
+        "slides": [
+            {
+                "id": "faturamento_info",
+                "modo": "ancora",
+                "ancora": "Faturamento",
+                "cabecalho": "Faturamento - Evolução Mensal",
+                "descricao": "Tabela e Média:\n{faturamento.tabela_de_faturamento_mes_a_mes}\n\nMédia e Desvio:\n{faturamento.media_mensal_e_desvio_padrao}"
+            },
+            {
+                "id": "faturamento_comp",
+                "modo": "ancora",
+                "ancora": "Faturamento",
+                "cabecalho": "Faturamento - Comparativo e Sazonalidade",
+                "descricao": "Sazonalidade:\n{faturamento.sazonalidade}\n\nComparativo com ano anterior:\n{faturamento.comparativo_com_ano_anterior}"
+            }
+        ]
+    },
+    "Lista de Clientes": {
+        "exibir_usuario": true,
+        "palavras_chave": [
+            "lista de clientes",
+            "relacao de clientes",
+            "principais clientes"
+        ],
+        "slides": [
+            {
+                "id": "clientes_info",
+                "modo": "ancora",
+                "ancora": "Clientes",
+                "cabecalho": "Lista de Principais Clientes",
+                "descricao": "{lista_de_clientes.extracao_e_lista_de_clientes}"
+            }
+        ]
+    },
+    "Curva ABC": {
+        "exibir_usuario": true,
+        "palavras_chave": [
+            "curva abc",
+            "abc de clientes",
+            "abc de fornecedores",
+            "concentracao"
+        ],
+        "slides": [
+            {
+                "id": "curva_info",
+                "modo": "ancora",
+                "ancora": "Curva ABC",
+                "cabecalho": "Análise da Curva ABC (Concentração)",
+                "descricao": "{curva_abc.analise_de_curva_abc}"
+            }
+        ]
+    },
+    "Endividamento Bancário": {
+        "exibir_usuario": true,
+        "palavras_chave": [
+            "endividamento",
+            "scr",
+            "bacen",
+            "registrato",
+            "divida bancaria"
+        ],
+        "slides": [
+            {
+                "id": "scr_info",
+                "modo": "ancora",
+                "ancora": "Endividamento",
+                "cabecalho": "Endividamento Bancário (SCR) - Nível e Prazos",
+                "descricao": "Análise do Endividamento:\n{endividamento_bancario_scr.analise_de_nivel_de_endividamento}\n\nCurto vs Longo Prazo:\n{endividamento_bancario_scr.comparativo_curto_vs_longo_prazo}\n\nCruzamento com Saldos:\n{endividamento_bancario_scr.cruzamento_com_saldos_bancarios}"
+            }
+        ]
+    },
+    "BALANÇO / DRE": {
+        "exibir_usuario": true,
+        "palavras_chave": [
+            "balanco",
+            "dre",
+            "balancete",
+            "demonstracao",
+            "contabil"
+        ],
+        "slides": [
+            {
+                "id": "balanco_info",
+                "modo": "ancora",
+                "ancora": "Balanço",
+                "cabecalho": "Balanço / DRE - Liquidez e Solvência",
+                "descricao": "{balanco_dre.analise_completa_de_liquidez_e_solvencia}"
+            }
+        ]
+    },
+    "Relatório de Risco": {
+        "exibir_usuario": true,
+        "palavras_chave": [
+            "raroc",
+            "pd",
+            "lgd",
+            "relatorio risco"
+        ],
+        "slides": [
+            {
+                "id": "risco_info",
+                "modo": "ancora",
+                "ancora": "Risco",
+                "cabecalho": "Avaliação de Risco e Limite de Crédito",
+                "descricao": "Score/Risco Definido: {relatorio_risco.definicao_do_risco_de_credito}\n\nRAROC/PD/LGD: {relatorio_risco.calculo_quantitativo_raroc_pd_e_lgd}\n\nLimite Sugerido: {relatorio_risco.limite_de_credito_sugerido}\n\nConclusão Técnica: \n{relatorio_risco.conclusao_justificativa_tecnica}"
+            }
+        ]
+    }
+}

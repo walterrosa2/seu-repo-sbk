@@ -92,8 +92,20 @@ STATIC_AGENT_VARIABLES = [
     "relatorio_risco.definicao_do_risco_de_credito",
     "relatorio_risco.limite_de_credito_sugerido",
     "relatorio_risco.conclusao_justificativa_tecnica",
-    "balanco.analise_completa_de_liquidez_e_solvencia",
-    "faturamento.faturamento_mensal"
+    "balanco_dre.analise_completa_de_liquidez_e_solvencia",
+    
+    # NOVOS TIPOS (AGENTE 2)
+    "faturamento.tabela_de_faturamento_mes_a_mes",
+    "faturamento.media_mensal_e_desvio_padrao",
+    "faturamento.comparativo_com_ano_anterior",
+    "faturamento.sazonalidade",
+    "cartao_cnpj.extracao_razao_social_numero_atividade",
+    "cartao_cnpj.validacao_situacao_cadastral",
+    "lista_de_clientes.extracao_e_lista_de_clientes",
+    "curva_abc.analise_de_curva_abc",
+    "endividamento_bancario_scr.analise_de_nivel_de_endividamento",
+    "endividamento_bancario_scr.cruzamento_com_saldos_bancarios",
+    "endividamento_bancario_scr.comparativo_curto_vs_longo_prazo"
 ]
 
 def get_presentation_variables(cnpj: str, exec_path: Path) -> dict:

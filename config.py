@@ -54,6 +54,7 @@ class Settings(BaseSettings):
 
     # --- Diretórios base ---
     DATA_DIR: Path = Field(default=Path("execuções"))
+    CONFIG_DIR: Path = Field(default=Path("."), description="Pasta para arquivos de config persistentes")
     RETAIN_DAYS: int = Field(30, ge=1)
     MASK_LOGS: bool = Field(True, description="Mascarar CNPJ/E-mail nos logs")
 

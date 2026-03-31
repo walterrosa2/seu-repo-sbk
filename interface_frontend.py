@@ -1790,9 +1790,10 @@ with tab_pres:
 
     with tab_mapeamento:
         cfg_all = load_config()
-        # Unificação da lista de tipos: Hardcoded + Dinâmicos do JSON
-        tipos_base = ["Serasa PJ", "IRPF Sócio", "VADU", "Outro"]
-        tipos_disponiveis = list(dict.fromkeys(tipos_base + list(cfg_all.keys())))
+        # Usa estritamente os tipos carregados do JSON
+        tipos_disponiveis = list(cfg_all.keys())
+        if not tipos_disponiveis:
+            tipos_disponiveis = ["SEM CONFIGURAÇÃO"]
         
         if st.session_state.get("target_edit_type"):
             st.session_state.cfg_tipo = st.session_state.pop("target_edit_type")
@@ -1911,7 +1912,10 @@ with tab_pres:
             with vt3: st.code("{risco} {limite} {raroc} {score_serasa} {decisao} {justificativa_risco} {justificativa_limite} {total_protestos} {pefin_refin}", language=None)
             
             st.divider()
-            vars_all = ["{nome_empresa}", "{cnpj}", "{data_fundacao}", "{capital_social}", "{porte_empresa}", "{situacao_cadastral}", "{nire}", "{socios}", "{patrimonio_socios}", "{renda_declarada}", "{faturamento_mensal}", "{sazonalidade}", "{principais_clientes}", "{principais_fornecedores}", "{risco}", "{limite}", "{raroc}", "{score_serasa}", "{decisao}", "{justificativa_risco}", "{justificativa_limite}", "{alerta_docs_antigos}", "{total_protestos}", "{quantidade_processos}", "{endividamento_bancario}", "{pefin_refin}"]
+            from utils.presentation_helpers import STATIC_AGENT_VARIABLES
+            base_vars = ["{nome_empresa}", "{cnpj}", "{data_fundacao}", "{capital_social}", "{porte_empresa}", "{situacao_cadastral}", "{nire}", "{socios}", "{patrimonio_socios}", "{renda_declarada}", "{risco}", "{limite}", "{raroc}", "{score_serasa}", "{decisao}", "{justificativa_risco}", "{justificativa_limite}", "{alerta_docs_antigos}", "{total_protestos}", "{quantidade_processos}", "{pefin_refin}"]
+            agent_vars = [f"{{{v}}}" for v in STATIC_AGENT_VARIABLES]
+            vars_all = base_vars + agent_vars
             v_sel = st.selectbox("🔍 Copiar para Cabeçalho/Descrição:", [""] + vars_all, key=f"var_sel_{slide_idx_edit}")
             if v_sel: st.info(f"Clique para copiar: `{v_sel}`")
 
