@@ -44,7 +44,7 @@ def _pdf_pages(path: Path) -> int:
 # -----------------------------
 # Modelo de dados do progresso
 # -----------------------------
-ETAPAS = ["extracao", "preprocesso", "ia1", "ia2", "envio"]
+ETAPAS = ["extracao", "preprocesso", "ia1", "ia2", "apresentacao", "envio"]
 
 
 @dataclass

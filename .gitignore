@@ -12,6 +12,7 @@ execuções/
 entrada/
 saida/
 logs/
+tmp/
 *.log
 
 # Legacy & Debug Files

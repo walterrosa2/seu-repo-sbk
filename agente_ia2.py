@@ -59,24 +59,28 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
 
 
+from config import get_settings
+
+settings = get_settings()
+
 def run_openai_agente2(system_prompt: str, user_prompt: str, model: str, api_key: str, org: str | None) -> str:
     client = OpenAI(api_key=api_key, organization=org)
-    resp = client.responses.create(
+    resp = client.chat.completions.create(
         model=model,
-        input=[
+        messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
         temperature=0.2,
-        max_output_tokens=8000,
+        max_tokens=8000,
     )
-    return resp.output_text.strip()
+    return resp.choices[0].message.content.strip()
 
 
 def process_manifest_ia2(cnpj: str, exec_root: Path = Path("execuções")) -> dict:
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-    OPENAI_ORG = os.getenv("OPENAI_ORG", None)
-    OPENAI_MODEL_IA2 = os.getenv("OPENAI_MODEL_IA2", "gpt-4.1")
+    OPENAI_API_KEY = settings.OPENAI_API_KEY
+    OPENAI_ORG = settings.OPENAI_ORG
+    OPENAI_MODEL_IA2 = settings.OPENAI_MODEL_IA2
 
     logger = init_logger(cnpj)
     tracker = ProgressTracker(cnpj)

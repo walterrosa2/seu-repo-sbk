@@ -14,7 +14,6 @@ import json
 import time # Added for unique JS injection
 import shutil
 import re
-from unittest.mock import MagicMock
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -392,16 +391,12 @@ if st.session_state.get("modo_desenv"):
 
 all_tabs = st.tabs(tabs_list)
 
-# Unpack simple tabs safely (important for headless tests)
-if len(all_tabs) >= 5:
-    tab_exec = all_tabs[0]
-    tab_prog = all_tabs[1]
-    tab_res = all_tabs[2]
-    tab_pres = all_tabs[3]
-    tab_tec = all_tabs[4]
-else:
-    # Em ambiente de teste streamlit.tabs pode retornar lista vazia
-    tab_exec = tab_prog = tab_res = tab_pres = tab_tec = MagicMock()
+# Unpack simple tabs first, admin tab handled dynamically
+tab_exec = all_tabs[0]
+tab_prog = all_tabs[1]
+tab_res = all_tabs[2]
+tab_pres = all_tabs[3]
+tab_tec = all_tabs[4]
 
 idx_next = 5
 tab_users = None
@@ -831,7 +826,15 @@ def executar_pipeline(cnpj: str, email: str, arquivos, tipo_execucao: str):
 
                             _tlog("STEP", f"Agente IA → Buscando: '{instrucao_ia}' (pág {pag+1})...")
                             from utils.pdf_cropper import crop_pdf_by_ia_agent
-                            crop_result = crop_pdf_by_ia_agent(str(pdf_p), instrucao_ia, page_num=pag, out_path=str(img_path), audit_logger=logger)
+                            ia_top_margin_ratio = s_cfg.get("ia_top_margin_ratio", 0.03)
+                            crop_result = crop_pdf_by_ia_agent(
+                                str(pdf_p),
+                                instrucao_ia,
+                                page_num=pag,
+                                out_path=str(img_path),
+                                audit_logger=logger,
+                                ia_top_margin_ratio=ia_top_margin_ratio,
+                            )
                             success = crop_result.get("success", False)
                             if success:
                                 _tlog("OK", f"Agente IA identificou trecho com sucesso")
@@ -1524,32 +1527,11 @@ with tab_pres:
                 if not slides:
                     st.warning("Nenhum slide foi listado nesta execução.")
                 else:
-                    # Seletor Central de Slides
-                    col_sel, col_del_btn = st.columns([4, 1])
-                    with col_sel:
-                        i = st.selectbox(
-                            "Selecione um Slide para Editar / Pré-visualizar",
-                            range(len(slides)),
-                            format_func=lambda x: f"Slide {x+1}: {slides[x].get('title', 'Sem título')[:60]}"
-                        )
-                    with col_del_btn:
-                        st.write("") # alinhamento visual com selectbox
-                        st.write("")
-                        if st.button("🗑️ Excluir", key="btn_del_slide_gerado", use_container_width=True, type="secondary", help="Exclui o slide atual e regera a apresentação"):
-                            slides.pop(i)
-                            config_slides_path.write_text(json.dumps(slides, indent=4, ensure_ascii=False), encoding="utf-8")
-                            with st.spinner("Regerando PPTX sem este slide..."):
-                                criar_apresentacao_evidencias(cnpj, slides, str(out_pptx))
-                                criar_apresentacao_pdf(cnpj, slides, str(out_pdf))
-                            st.success("Slide Excluído!")
-                            time.sleep(1)
-                            st.rerun()
-
-                    if slides:
-                        slide = slides[i]
-                        st.markdown("---")
-                        
-                        with st.container():
+                    # Tabs estilo Carrossel
+                    slide_tabs = st.tabs([f"Slide {i+1}: {s.get('title', 'Sem título')[:15]}..." for i, s in enumerate(slides)])
+                    
+                    for i, (tab, slide) in enumerate(zip(slide_tabs, slides)):
+                        with tab:
                             has_img = bool(slide.get("image_path") and Path(slide["image_path"]).exists())
                             slide_card_header(i + 1, slide.get("title", "Sem título"), has_img)
                             c_img, c_form = st.columns([1, 1])
@@ -1612,20 +1594,6 @@ with tab_pres:
                                             
                                 st.markdown("**📤 Subir Imagem Substituta (Opcional)**")
                                 nova_img = st.file_uploader(f"Substituir evidência (Slide {i+1})", type=["png", "jpg", "jpeg"], key=f"up_img_{i}")
-                                if nova_img:
-                                    if st.button("🖼️ Confirmar e Substituir Imagem", key=f"btn_up_confirm_{i}", type="primary", use_container_width=True):
-                                        img_path = dirs["saida"] / f"custom_{i}_{nova_img.name}"
-                                        img_path.write_bytes(nova_img.getbuffer())
-                                        slide["image_path"] = str(img_path)
-                                        slides[i] = slide
-                                        import json
-                                        config_slides_path.write_text(json.dumps(slides, indent=4, ensure_ascii=False), encoding="utf-8")
-                                        from presentation_service import criar_apresentacao_evidencias
-                                        from pdf_presentation_service import criar_apresentacao_pdf
-                                        criar_apresentacao_evidencias(cnpj, slides, str(out_pptx))
-                                        criar_apresentacao_pdf(cnpj, slides, str(out_pdf))
-                                        st.toast("✅ Imagem substituída!", icon="🖼️")
-                                        import time; time.sleep(1); st.rerun()
                             
                             with c_form:
                                 with st.form(key=f"form_slide_{i}"):
@@ -1667,254 +1635,104 @@ with tab_pres:
     section_header("Configurações de Mapeamento", tag="POR TIPO DE DOC", icon="⚙️")
     instruction_banner("Defina as configurações padrão para recortes dinâmicos por tipo de documento. Estas regras servem para todas as próximas execuções.")
     
-    # --- O bloco de variáveis dinâmicas foi movido para dentro da tab_mapeamento para melhor UX ---
-
+    glass_card_open()
+    st.markdown("**📌 Variáveis Dinâmicas Disponíveis (use em cabeçalhos e descrições):**")
     
-    # --- Sub-Abas de Configuração (com controle de estado) ---
-    config_tab_options = ["✂️ Mapeamento de Recortes", "📄 Gestão de Tipos", "📋 Visão Geral"]
-    if "active_config_tab_idx" not in st.session_state:
-        st.session_state.active_config_tab_idx = 0
+    col_v1, col_v2 = st.columns(2)
+    with col_v1:
+        st.markdown("**Dados Cadastrais:**")
+        st.code("{nome_empresa}  {cnpj}  {data_fundacao}  {capital_social}  {porte_empresa}  {situacao_cadastral}  {nire}", language=None)
+        st.markdown("**Faturamento & Mercado:**")
+        st.code("{faturamento_mensal}  {sazonalidade}  {principais_clientes}  {principais_fornecedores}", language=None)
+        st.markdown("**Quadro Societário:**")
+        st.code("{socios}  {patrimonio_socios}  {renda_declarada}", language=None)
+
+    with col_v2:
+        st.markdown("**Análise & Risco:**")
+        st.code("{risco}  {limite}  {raroc}  {score_serasa}  {decisao}  {justificativa_risco}  {justificativa_limite}  {alerta_docs_antigos}", language=None)
+        st.markdown("**Endividamento & Processos:**")
+        st.code("{total_protestos}  {quantidade_processos}  {endividamento_bancario}  {pefin_refin}", language=None)
+    
+    glass_card_close()
+    
+    cfg_all = load_config()
+    tipos_disponiveis = ["Serasa PJ", "IRPF Sócio", "VADU", "Outro"]
+    if "cfg_tipo" not in st.session_state:
+        st.session_state.cfg_tipo = tipos_disponiveis[0]
         
-    # Usando o parâmetro de index do st.tabs (disponível em versões recentes)
-    # Caso sua versão não suporte, o sistema ainda trocará o valor do selectbox interno.
-    try:
-        t_tabs = st.tabs(config_tab_options)
-    except:
-        t_tabs = st.tabs(config_tab_options)
+    selecao_doc = st.selectbox("Selecionar Tipo Documento", tipos_disponiveis, key="cfg_tipo")
+    atual = cfg_all.get(selecao_doc, {})
+    
+    # Busca PDF de exemplo para o auxiliar visual
+    pdf_exemplo = None
+    search_dirs = []
+    if cnpj:
+        dirs_tmp = get_current_job_dirs(cnpj)
+        search_dirs = [dirs_tmp["entrada"], dirs_tmp["pre"]]
+    
+    # Adiciona diretórios de execuções passadas para busca de amostra
+    for d in list(EXEC_ROOT.glob("*"))[:10]:
+        if d.is_dir():
+            search_dirs.append(d / "entrada")
+            search_dirs.append(d / "Pre_processamento")
 
-    if len(t_tabs) == 3:
-        tab_mapeamento, tab_gestao, tab_resumo = t_tabs
-    else:
-        from unittest.mock import MagicMock
-        tab_mapeamento = tab_gestao = tab_resumo = MagicMock()
+    all_pdfs = []
+    seen_paths = set()
+    for d in search_dirs:
+        if d.exists():
+            for pf in d.glob("*.pdf"):
+                if pf.name not in seen_paths:
+                    all_pdfs.append(pf)
+                    seen_paths.add(pf.name)
+    
+    for pf in all_pdfs:
+        if _heuristica_tipo_doc(pf.name, pf).upper() in selecao_doc.upper():
+            pdf_exemplo = pf
+            break
+    
+    if not pdf_exemplo and all_pdfs:
+        pdf_exemplo = all_pdfs[0]
 
-    with tab_resumo:
-        st.subheader("📋 Conferência de Mapeamentos")
-        st.caption("Visão geral de todos os slides configurados por tipo de documento.")
-        cfg_view = load_config()
-        
-        if not cfg_view:
-            st.info("Nenhum mapeamento customizado encontrado.")
-        else:
-            # Converte dict para list para facilitar manipulação
-            tipos_lista = list(cfg_view.keys())
-            
-            with st.form("form_reordenacao_global"):
-                st.markdown("**Defina a Sequência de Apresentação:**")
-                nova_ordem_map = {}
-                
-                for idx, t_name in enumerate(tipos_lista):
-                    t_data = cfg_view[t_name]
-                    slides_count = len(t_data.get("slides", []))
-                    
-                    c_label, c_order = st.columns([4, 1])
-                    c_label.markdown(f"📁 **{t_name}** ({slides_count} slides)")
-                    # O usuário escolhe o número da posição (Ex: 1, 2, 3...)
-                    pos = c_order.number_input(f"Ordem", min_value=1, max_value=len(tipos_lista), value=idx+1, key=f"ordem_{t_name}")
-                    nova_ordem_map[t_name] = pos
-                
-                if st.form_submit_button("✅ Aplicar e Salvar Nova Sequência"):
-                    # Ordena a lista de chaves baseada nos valores numéricos escolhidos
-                    # Proteção: Verifica se os valores não são mocks antes de ordenar
-                    tipos_ordenados = sorted(tipos_lista, key=lambda x: nova_ordem_map[x] if not isinstance(nova_ordem_map[x], MagicMock) else 0)
-                    
-                    # Reconstrói o dicionário de configuração na nova ordem
-                    new_cfg = {k: cfg_view[k] for k in tipos_ordenados}
-                    if save_config(new_cfg):
-                        st.success("Nova sequência de apresentação aplicada com sucesso!")
-                        time.sleep(1)
-                        st.rerun()
+    # Gestão de Múltiplos Slides para o Tipo Selecionado
+    slides_mapeados = atual.get("slides", [])
+    if not slides_mapeados:
+         slides_mapeados = [{
+            "modo": atual.get("modo", "ancora"),
+            "ancora": atual.get("ancora", ""),
+            "ancora_inicio": atual.get("ancora_inicio", ""),
+            "ancora_fim":    atual.get("ancora_fim", ""),
+            "pagina":       atual.get("pagina", 1),
+            "coordenadas":  atual.get("coordenadas", ""),
+            "cabecalho":    atual.get("cabecalho", ""),
+            "descricao":    atual.get("descricao", "")
+         }]
 
-            st.divider()
-            st.markdown("**Resumo dos Slides por Tipo:**")
-            for idx, t_name in enumerate(tipos_lista):
-                t_data = cfg_view[t_name]
-                with st.expander(f"🔍 Detalhes: {t_name}"):
-                    c_edit_btn = st.columns([4, 1])[1]
-                    if c_edit_btn.button("✏️ Editar", key=f"btn_edit_res_{t_name}"):
-                        st.session_state["target_edit_type"] = t_name
-                        st.rerun()
-                        
-                    if not t_data.get("slides"):
-                        st.warning("Sem slides.")
-                    else:
-                        st.table([{
-                            "Slide": i+1, 
-                            "Cabeçalho": s.get("cabecalho", ""), 
-                            "Mapeamento": s.get("modo", "")
-                        } for i, s in enumerate(t_data["slides"])])
+    st.markdown(f"### Slides Configuradores para: **{selecao_doc}**")
+    st.caption("Você pode configurar múltiplos recortes/slides para este mesmo tipo de documento.")
+    
+    slide_idx_edit = st.selectbox("Selecionar Slide para Editar", range(len(slides_mapeados)), format_func=lambda x: f"Slide {x+1}: {slides_mapeados[x].get('cabecalho', 'Novo')}")
+    s_atual = slides_mapeados[slide_idx_edit]
+    
+    col_del1, col_del2 = st.columns([4, 1])
+    if len(slides_mapeados) > 1:
+        if col_del2.button("🗑️ Remover Slide", key=f"del_slide_map_{slide_idx_edit}"):
+            slides_mapeados.pop(slide_idx_edit)
+            cfg_all[selecao_doc]["slides"] = slides_mapeados
+            save_config(cfg_all)
+            st.rerun()
 
-    with tab_gestao:
-        st.subheader("Gestão Dinâmica de Tipos")
-        cfg_edit = load_config()
-        with st.form("form_novo_tipo_aba"):
-            st.markdown("**Cadastrar Novo Tipo de Documento**")
-            novo_tipo_nome = st.text_input("Nome", placeholder="Ex: Extrato Bancário Santander")
-            aliases_input = st.text_input("Palavras-chave (Aliases)", help="Textos que se contidos no nome do arquivo identificam este tipo. Separe por vírgula.")
-            if st.form_submit_button("✅ Salvar Tipo"):
-                novo_tipo_nome = novo_tipo_nome.strip()
-                if novo_tipo_nome and novo_tipo_nome not in cfg_edit:
-                    aliases = [a.strip() for a in aliases_input.split(",") if a.strip()]
-                    cfg_edit[novo_tipo_nome] = {
-                        "exibir_usuario": True, 
-                        "palavras_chave": aliases, 
-                        "slides": [{
-                            "modo": "ancora",
-                            "ancora": "",
-                            "pagina": 1,
-                            "cabecalho": f"{novo_tipo_nome}",
-                            "descricao": ""
-                        }]
-                    }
-                    save_config(cfg_edit)
-                    st.success(f"Tipo '{novo_tipo_nome}' cadastrado com sucesso!")
-                    import time; time.sleep(0.5); st.rerun()
-                elif not novo_tipo_nome: st.error("O nome não pode estar vazio.")
-                else: st.error("Este tipo já existe.")
-
-        st.markdown("**Tipos Customizados**")
-        for t_name, t_data in cfg_edit.items():
-            with st.expander(f"📁 {t_name}"):
-                palavras = ", ".join(t_data.get("palavras_chave", []))
-                new_aliases = st.text_input("Palavras-chave (Aliases)", value=palavras, key=f"aliases_{t_name}")
-                c1, c2 = st.columns([1, 1])
-                if c1.button("💾 Salvar Alterações", key=f"upd_{t_name}"):
-                    t_data["palavras_chave"] = [x.strip() for x in new_aliases.split(",") if x.strip()]
-                    cfg_edit[t_name] = t_data
-                    save_config(cfg_edit)
-                    st.success("Salvo!"); st.rerun()
-                if c2.button("🗑️ Remover Tipo", key=f"rm_{t_name}"):
-                    del cfg_edit[t_name]
-                    save_config(cfg_edit)
-                    st.success("Removido!"); st.rerun()
-
-    with tab_mapeamento:
-        cfg_all = load_config()
-        # Unificação da lista de tipos: Hardcoded + Dinâmicos do JSON
-        tipos_base = ["Serasa PJ", "IRPF Sócio", "VADU", "Outro"]
-        tipos_disponiveis = list(dict.fromkeys(tipos_base + list(cfg_all.keys())))
-        
-        if st.session_state.get("target_edit_type"):
-            st.session_state.cfg_tipo = st.session_state.pop("target_edit_type")
-        
-        if "cfg_tipo" not in st.session_state or st.session_state.cfg_tipo not in tipos_disponiveis:
-            st.session_state.cfg_tipo = tipos_disponiveis[0]
-            
-        selecao_doc = st.selectbox("Selecionar Tipo Documento", tipos_disponiveis, key="cfg_tipo")
-        atual = cfg_all.get(selecao_doc, {})
-        
-        # Busca PDF de exemplo para o auxiliar visual
-        pdf_exemplo = None
-        search_dirs = []
-        if cnpj:
-            dirs_tmp = get_current_job_dirs(cnpj)
-            search_dirs = [dirs_tmp["entrada"], dirs_tmp["pre"]]
-        
-        # Adiciona diretórios de execuções passadas para busca de amostra
-        for d in list(EXEC_ROOT.glob("*"))[:10]:
-            if d.is_dir():
-                search_dirs.append(d / "entrada")
-                search_dirs.append(d / "Pre_processamento")
-
-        all_pdfs = []
-        seen_paths = set()
-        for d in search_dirs:
-            if d.exists():
-                for pf in d.glob("*.pdf"):
-                    if pf.name not in seen_paths:
-                        all_pdfs.append(pf)
-                        seen_paths.add(pf.name)
-        
-        for pf in all_pdfs:
-            # Import dinâmico necessário para evitar circular dependência no boot
-            from report_parser import _heuristica_tipo_doc
-            if _heuristica_tipo_doc(pf.name, pf).upper() in selecao_doc.upper():
-                pdf_exemplo = pf
-                break
-        
-        if not pdf_exemplo and all_pdfs:
-            pdf_exemplo = all_pdfs[0]
-
-        # Gestão de Múltiplos Slides para o Tipo Selecionado
-        slides_mapeados = atual.get("slides", [])
-        if not slides_mapeados:
-             slides_mapeados = [{
-                "modo": "ancora",
-                "ancora": "",
-                "pagina": 1,
-                "cabecalho": selecao_doc,
-                "descricao": ""
-             }]
-
-        st.markdown(f"### Slides Configuradores para: **{selecao_doc}**")
-        st.caption("Você pode configurar múltiplos recortes/slides para este mesmo tipo de documento.")
-        
-        slide_idx_edit = st.selectbox("Selecionar Slide para Editar", range(len(slides_mapeados)), format_func=lambda x: f"Slide {x+1}: {slides_mapeados[x].get('cabecalho', 'Novo')}")
-        s_atual = slides_mapeados[slide_idx_edit]
-        
-        col_reorder, col_del = st.columns([4, 1])
-        
-        with col_reorder:
-            # Botões de reordenação (somente se houver mais de 1 slide)
-            if len(slides_mapeados) > 1:
-                c_up, c_down, c_spacer = st.columns([1, 1, 2])
-                if slide_idx_edit > 0:
-                    if c_up.button("⬆️ Subir", help="Mover slide para cima na ordem", use_container_width=True):
-                        # Troca de posição
-                        slides_mapeados[slide_idx_edit], slides_mapeados[slide_idx_edit-1] = slides_mapeados[slide_idx_edit-1], slides_mapeados[slide_idx_edit]
-                        cfg_all[selecao_doc]["slides"] = slides_mapeados
-                        save_config(cfg_all)
-                        st.toast("Slide movido para cima!")
-                        time.sleep(0.3)
-                        st.rerun()
-                
-                if slide_idx_edit < len(slides_mapeados) - 1:
-                    if c_down.button("⬇️ Baixar", help="Mover slide para baixo na ordem", use_container_width=True):
-                        # Troca de posição
-                        slides_mapeados[slide_idx_edit], slides_mapeados[slide_idx_edit+1] = slides_mapeados[slide_idx_edit+1], slides_mapeados[slide_idx_edit]
-                        cfg_all[selecao_doc]["slides"] = slides_mapeados
-                        save_config(cfg_all)
-                        st.toast("Slide movido para baixo!")
-                        time.sleep(0.3)
-                        st.rerun()
-
-        with col_del:
-            if st.button("🗑️ Excluir", key=f"del_slide_map_{slide_idx_edit}", use_container_width=True, type="secondary"):
-                slides_mapeados.pop(slide_idx_edit)
-                if not slides_mapeados:
-                    cfg_all[selecao_doc]["slides"] = [{
-                        "modo": "ancora", "cabecalho": selecao_doc, "pagina": 1, "ancora": "", "descricao": ""
-                    }]
-                else:
-                    cfg_all[selecao_doc]["slides"] = slides_mapeados
-                save_config(cfg_all)
-                st.success("Removido!"); time.sleep(0.5); st.rerun()
-
-        modo_s = st.radio(
-            "Modo de Recorte do Slide",
-            ["Agente de IA (Vision)", "Âncora Textual (simples)", "Âncora Início+Fim (Range)", "Coordenadas Fixas"],
-            index=(
-                0 if s_atual.get("modo") == "ancora"
-                else 1 if s_atual.get("modo") == "ancora_simples"
-                else 2 if s_atual.get("modo") == "ancora_range"
-                else 3
-            ),
-            key=f"modo_slide_{slide_idx_edit}",
-            horizontal=True
-        )
-
-        with st.expander("📌 Variáveis Dinâmicas & Lista de Apoio"):
-            st.markdown("Use as abas abaixo para copiar as variáveis disponíveis:")
-            vt1, vt2, vt3 = st.tabs(["📋 Cadastro", "📈 Financeiro", "⚖️ Risco"])
-            with vt1: st.code("{nome_empresa} {cnpj} {data_fundacao} {capital_social} {porte_empresa} {situacao_cadastral} {nire} {socios}", language=None)
-            with vt2: st.code("{faturamento_mensal} {sazonalidade} {principais_clientes} {principais_fornecedores} {endividamento_bancario}", language=None)
-            with vt3: st.code("{risco} {limite} {raroc} {score_serasa} {decisao} {justificativa_risco} {justificativa_limite} {total_protestos} {pefin_refin}", language=None)
-            
-            st.divider()
-            vars_all = ["{nome_empresa}", "{cnpj}", "{data_fundacao}", "{capital_social}", "{porte_empresa}", "{situacao_cadastral}", "{nire}", "{socios}", "{patrimonio_socios}", "{renda_declarada}", "{faturamento_mensal}", "{sazonalidade}", "{principais_clientes}", "{principais_fornecedores}", "{risco}", "{limite}", "{raroc}", "{score_serasa}", "{decisao}", "{justificativa_risco}", "{justificativa_limite}", "{alerta_docs_antigos}", "{total_protestos}", "{quantidade_processos}", "{endividamento_bancario}", "{pefin_refin}"]
-            v_sel = st.selectbox("🔍 Copiar para Cabeçalho/Descrição:", [""] + vars_all, key=f"var_sel_{slide_idx_edit}")
-            if v_sel: st.info(f"Clique para copiar: `{v_sel}`")
-
+    modo_s = st.radio(
+        "Modo de Recorte do Slide",
+        ["Agente de IA (Vision)", "Âncora Textual (simples)", "Âncora Início+Fim (Range)", "Coordenadas Fixas"],
+        index=(
+            0 if s_atual.get("modo") == "ancora"
+            else 1 if s_atual.get("modo") == "ancora_simples"
+            else 2 if s_atual.get("modo") == "ancora_range"
+            else 3
+        ),
+        key=f"modo_slide_{slide_idx_edit}",
+        horizontal=True
+    )
 
     with st.form("form_mapping"):
         st.markdown(f"**Configurações do Slide {slide_idx_edit + 1}**")
@@ -2175,14 +1993,57 @@ if tab_desenv:
                         from config_evidencias_service import load_config
                         
                         cfg_temp = load_config()
+                        audit_cnpj = st.session_state.get("cnpj") or "00000000000000"
+                        dev_logger = init_logger(audit_cnpj)
+                        _audit_write(dev_logger, AuditEvent(
+                            ts=datetime.now().isoformat(timespec="seconds"),
+                            level="INFO",
+                            step="desenv_pres.classificacao_lote",
+                            message="Lote do Agente de Visão iniciado",
+                            extra={
+                                "cnpj": audit_cnpj,
+                                "origem": "botao_agente_de_visao",
+                                "arquivos": [f.name for f in d_files_pres],
+                            }
+                        ))
                         results = []
                         for f in d_files_pres:
                             p_path = d_tmp / f.name
-                            tipo, context = classificar_documento(str(p_path))
+                            try:
+                                tipo, context = classificar_documento(str(p_path), audit_logger=dev_logger)
+                            except TypeError as e:
+                                if "audit_logger" not in str(e):
+                                    raise
+                                _audit_write(dev_logger, AuditEvent(
+                                    ts=datetime.now().isoformat(timespec="seconds"),
+                                    level="WARNING",
+                                    step="classificacao_ia.compat",
+                                    message=f"Fallback de compatibilidade aplicado no Agente de Visão: {f.name}",
+                                    extra={
+                                        "arquivo": f.name,
+                                        "origem": "botao_agente_de_visao",
+                                        "erro": str(e),
+                                    }
+                                ))
+                                tipo, context = classificar_documento(str(p_path))
                             
                             # Tenta sugerir âncoras se o tipo for novo ou precisar de ajuste
-                            status = "Conhecido" if tipo in cfg_temp else "Novo Identificado"
+                            if tipo == "Desconhecido":
+                                status = "Sem classificação"
+                            else:
+                                status = "Conhecido" if tipo in cfg_temp else "Novo Identificado"
                             results.append({"arquivo": f.name, "tipo": tipo, "status": status})
+                        _audit_write(dev_logger, AuditEvent(
+                            ts=datetime.now().isoformat(timespec="seconds"),
+                            level="INFO",
+                            step="desenv_pres.classificacao_lote",
+                            message="Lote do Agente de Visão concluído",
+                            extra={
+                                "cnpj": audit_cnpj,
+                                "origem": "botao_agente_de_visao",
+                                "resultados": results,
+                            }
+                        ))
                             
                         st.write("### Resultados do Agente:")
                         st.table(results)

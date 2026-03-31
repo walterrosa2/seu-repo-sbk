@@ -1,6 +1,7 @@
 # main.py
 from __future__ import annotations
 
+import argparse
 import os
 import sys
 import subprocess
@@ -48,12 +49,32 @@ def ensure_project_dirs() -> None:
     base.mkdir(parents=True, exist_ok=True)
 
 
-def main() -> int:
+def resolve_ngrok_usage(cli_value: str | None) -> bool:
+    if cli_value == "on":
+        return True
+    if cli_value == "off":
+        return False
+    return os.getenv("USE_NGROK", "0").lower() in {"1", "true", "yes", "on"}
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Inicializador do frontend Streamlit")
+    parser.add_argument(
+        "--ngrok",
+        choices=("on", "off", "auto"),
+        default="auto",
+        help="Controla o túnel ngrok. 'auto' usa USE_NGROK do ambiente.",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
     ensure_project_dirs()
 
     host, port = resolve_host_port()
 
-    use_ngrok = os.getenv("USE_NGROK", "0") in {"1", "true", "yes"}
+    use_ngrok = resolve_ngrok_usage(args.ngrok)
     public_url = None
 
     if use_ngrok:
@@ -73,10 +94,10 @@ def main() -> int:
         print(f"🌐 Acesse externamente via: {public_url}")
     else:
         print(f"📍 Acesse local: http://{host}:{port}")
-        print("🌐 Para acesso remoto, configure .env com USE_NGROK=1 e NGROK_AUTHTOKEN")
+        print("🌐 Para acesso remoto, use --ngrok on ou configure .env com USE_NGROK=1 e NGROK_AUTHTOKEN")
 
     cmd = [
-        sys.executable, "-m", "streamlit", "run", "interface_frontend.py",
+        sys.executable, "streamlit_bootstrap.py", "run", "interface_frontend.py",
         "--server.address", host,
         "--server.port", str(port),
     ]

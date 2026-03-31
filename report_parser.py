@@ -9,6 +9,8 @@ try:
 except ImportError:
     PyPDF2 = None
 
+from config_evidencias_service import get_all_aliases
+
 logger = logging.getLogger(__name__)
 
 # ==========================================
@@ -269,12 +271,15 @@ def generate_docs_index(execution_path: Path) -> List[Dict[str, Any]]:
     return docs_index
 
 def _heuristica_tipo_doc(filename: str, txt_filepath: Path) -> str:
-    """Classifies document based on filename and content."""
+    """Classifies document based on filename and content dynamically."""
     name_lower = filename.lower()
-    if "serasa" in name_lower: return "SERASA"
-    if "vadu" in name_lower: return "VADU"
-    if "irpf" in name_lower or "imposto de renda" in name_lower: return "IRPF"
-    if "scr" in name_lower: return "SCR"
+    mapeamento_dinamico = get_all_aliases()
+    
+    for tipo_doc, aliases in mapeamento_dinamico.items():
+        if any(a.lower() in name_lower for a in aliases if a):
+            return tipo_doc
+            
+    # Fallback to general generic if no dynamic matched
     if "contrato" in name_lower or "social" in name_lower: return "Contratos"
     if "faturamento" in name_lower or "nota" in name_lower: return "Financeiro"
     return "Outros"

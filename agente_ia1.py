@@ -11,14 +11,15 @@ from openai import OpenAI
 from report_parser import clean_filename
 from utils.naming import nome_resumo_ia
 
-# =============================
-# Configs do ambiente / OpenAI
-# =============================
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_ORG = os.getenv("OPENAI_ORG", None)
-OPENAI_MODEL_IA1 = os.getenv("OPENAI_MODEL_IA1", "gpt-4o")
+from config import get_settings
 
-client = OpenAI(api_key=OPENAI_API_KEY, organization=OPENAI_ORG)
+settings = get_settings()
+
+def get_openai_client() -> OpenAI:
+    return OpenAI(
+        api_key=settings.OPENAI_API_KEY, 
+        organization=settings.OPENAI_ORG
+    )
 
 
 # =============================
@@ -41,16 +42,17 @@ def write_text(path: Path, text: str) -> None:
 
 
 def run_openai_agente1(system_prompt: str, user_prompt: str) -> str:
-    resp = client.responses.create(
-        model=OPENAI_MODEL_IA1,
-        input=[
+    client = get_openai_client()
+    resp = client.chat.completions.create(
+        model=settings.OPENAI_MODEL_IA1,
+        messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ],
         temperature=0.2,
-        max_output_tokens=8000,
+        max_tokens=8000,
     )
-    return resp.output_text.strip()
+    return resp.choices[0].message.content.strip()
 
 
 # =============================
@@ -104,7 +106,7 @@ def process_manifest_ia1(cnpj: str, exec_root: Path = Path("execuções")) -> di
     # ---- Artefatos de status da execução IA1 ----
     consolidado = {
         "cnpj": cnpj,
-        "modelo": OPENAI_MODEL_IA1,
+        "modelo": settings.OPENAI_MODEL_IA1,
         "respostas_txt": resultado_paths,
         "erros": erros
     }
