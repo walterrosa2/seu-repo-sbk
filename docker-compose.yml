@@ -5,7 +5,7 @@
 # downloads de apt/PyPI/wkhtmltopdf — mitiga firewall).
 #
 # Pré-requisitos no servidor do cliente (ver runbook / plano):
-#   1) docker login ghcr.io  (com PAT de escopo read:packages)
+#   1) Imagem PÚBLICA no GHCR — NÃO é necessário docker login nem PAT.
 #   2) Restaurar do backup do Railway ANTES do "up":
 #        - ./execuções/                (pasta)
 #        - ./config_evidencias.json     (ARQUIVO — não pode ser pasta)

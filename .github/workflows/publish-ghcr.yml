@@ -9,8 +9,7 @@
 #                                           (NÃO toca em latest — seguro p/ testes)
 #
 # A imagem fica em: ghcr.io/<owner>/<repo>  (ex.: ghcr.io/walterrosa2/seu-repo-sbk)
-# Repositório privado => no cliente é necessário "docker login ghcr.io" com
-# um PAT de escopo read:packages.
+# Pacote PÚBLICO => o cliente puxa a imagem sem docker login/PAT.
 # ==========================================================================
 
 name: Publish image to GHCR
