@@ -6,10 +6,9 @@
 # na imagem publicada no GHCR.
 # ==========================================================================
 
-# --- Segredos ---
+# --- Segredos (e o próprio .env.example, que não precisa ir para a imagem) ---
 .env
 .env.*
-!.env.example
 
 # --- Dados de runtime / persistidos via volume (nunca na imagem) ---
 execuções/
@@ -43,8 +42,10 @@ __pycache__/
 Thumbs.db
 desktop.ini
 
-# --- Deploy / artefatos / legados ---
+# --- Deploy / artefatos / legados (não pertencem ao runtime da imagem) ---
 Deploy PWhere/
+docker-compose.yml
+.github/
 *_old.py
 *_debug.py
 Pipeline_v1.txt

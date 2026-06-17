@@ -19,7 +19,7 @@
 
 services:
   sbk:
-    image: ghcr.io/walterrosa2/seu-repo-sbk:latest   # ajuste para a TAG real publicada no GHCR
+    image: ghcr.io/walterrosa2/seu-repo-sbk:1.0.0   # tag fixa publicada pelo workflow publish-ghcr.yml (use latest só se quiser sempre a última)
     container_name: sbk-analista-credito
     env_file:
       - ./.env
