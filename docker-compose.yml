@@ -1,0 +1,45 @@
+# ==========================================================================
+# docker-compose.yml — Deploy on-premise (servidor Windows 10 + Docker Desktop)
+#
+# Estratégia: PUXAR a imagem pronta do GHCR (sem build no cliente, evitando
+# downloads de apt/PyPI/wkhtmltopdf — mitiga firewall).
+#
+# Pré-requisitos no servidor do cliente (ver runbook / plano):
+#   1) docker login ghcr.io  (com PAT de escopo read:packages)
+#   2) Restaurar do backup do Railway ANTES do "up":
+#        - ./execuções/                (pasta)
+#        - ./config_evidencias.json     (ARQUIVO — não pode ser pasta)
+#        - ./users.json                 (ARQUIVO — não pode ser pasta)
+#   3) Colocar o ./.env (gerado do Railway, com USE_NGROK=0)
+#
+# Subir:    docker compose pull && docker compose up -d
+# Logs:     docker compose logs -f
+# Atualizar:docker compose pull && docker compose up -d
+# ==========================================================================
+
+services:
+  sbk:
+    image: ghcr.io/walterrosa2/seu-repo-sbk:latest   # ajuste para a TAG real publicada no GHCR
+    container_name: sbk-analista-credito
+    env_file:
+      - ./.env
+    environment:
+      - TZ=America/Sao_Paulo
+      - USE_NGROK=0
+      # Garante a porta interna esperada pelo CMD do Dockerfile (${PORT:-8501})
+      - PORT=8501
+    ports:
+      - "8501:8501"          # acesso LAN: http://<IP-do-servidor>:8501
+    volumes:
+      # IMPORTANTE (Windows): os dois arquivos abaixo PRECISAM existir no host
+      # antes do "up", senão o Docker cria diretórios e a app quebra.
+      - ./execuções:/app/execuções
+      - ./config_evidencias.json:/app/config_evidencias.json
+      - ./users.json:/app/users.json
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s

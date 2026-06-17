@@ -1,4 +1,7 @@
-FROM python:3.11-slim
+# Tag fixada em -bookworm: o .deb do wkhtmltopdf abaixo é específico para
+# Debian 12 (bookworm). Sem isso, uma futura mudança da base "slim" para
+# trixie (Debian 13) quebraria silenciosamente a instalação do wkhtmltopdf.
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 

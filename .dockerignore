@@ -1,0 +1,56 @@
+# ==========================================================================
+# .dockerignore — impede que segredos e dados de runtime entrem na imagem.
+# O Dockerfile usa "COPY . ." e o Docker NÃO respeita o .gitignore,
+# então este arquivo é a única proteção contra vazamento de credenciais
+# (.env) e de dados de clientes (execuções/, users.json, config_evidencias.json)
+# na imagem publicada no GHCR.
+# ==========================================================================
+
+# --- Segredos ---
+.env
+.env.*
+!.env.example
+
+# --- Dados de runtime / persistidos via volume (nunca na imagem) ---
+execuções/
+entrada/
+saida/
+Dados/
+tmp/
+logs/
+*.log
+users.json
+config_evidencias.json
+config_evidencias - Copia.json
+slides_config.json
+
+# --- Python ---
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Git / IDE / SO ---
+.git/
+.gitignore
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# --- Deploy / artefatos / legados ---
+Deploy PWhere/
+*_old.py
+*_debug.py
+Pipeline_v1.txt
+Melhorias*.txt
+Melhorias*.md
+
+# --- Docs/planos que não precisam ir para a imagem ---
+*.md
+!README.md
